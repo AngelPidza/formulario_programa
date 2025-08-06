@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo ,useState, useEffect } from 'react';
 import { Save, AlertCircle, Users, Package, Wrench, Fuel, Utensils, Tent, Droplets, Heart, PawPrint, ChevronLeft, ChevronRight, Loader, Check, X } from 'lucide-react';
 import './FormularioBrigadas.css'; // Asegúrate de tener un archivo CSS para estilos
 const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
@@ -39,7 +39,7 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
   ];
 
   // Mapeo de categorías API a pasos
-  const categoriaMap = {
+  const categoriaMap = useMemo(() => ({
     'EPP': 'epp',
     'HERRAMIENTAS': 'herramientas',
     'LOGISTICA': 'logistica',
@@ -48,7 +48,7 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
     'LIMPIEZA': 'limpieza',
     'MEDICAMENTOS': 'medicamentos',
     'RESCATE_ANIMAL': 'rescate_animal'
-  } [brigadaId];
+  }), []);
 
   // API Base URL (ajustar según tu configuración)
   const API_BASE = 'http://localhost:3000/api'; // Cambiar por tu URL base
@@ -97,6 +97,7 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
           }
           return acc;
         }, {});
+        console.log('Tipos de recursos por categoría:', tiposPorCategoria);
         setTiposRecursos(tiposPorCategoria);
 
         // Si es edición, cargar brigada existente
@@ -616,7 +617,7 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .formulario-container {
           
         }
