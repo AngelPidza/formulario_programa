@@ -4,8 +4,8 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  color: rgba(233, 3, 3, 0.87);
+
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -23,8 +23,11 @@ a:hover {
 }
 
 body {
+  width: 100%;
   margin: 0;
+  padding: 0;
   justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   place-items: center;
   min-width: 320px;
