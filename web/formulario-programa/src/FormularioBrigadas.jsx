@@ -35,7 +35,8 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
     { id: 'campo', label: 'Equipo Campo', icono: Tent, color: 'icon-purple' },
     { id: 'limpieza', label: 'Limpieza', icono: Droplets, color: 'icon-cyan' },
     { id: 'medicamentos', label: 'Medicamentos', icono: Heart, color: 'icon-red' },
-    { id: 'rescate', label: 'Rescate Animal', icono: PawPrint, color: 'icon-amber' }
+    { id: 'rescate_animal', label: 'Rescate Animal', icono: PawPrint, color: 'icon-amber' },
+    { id: 'revisión', label: 'Revisión Final', icono: Check, color: 'icon-green' }
   ];
 
   // Mapeo de categorías API a pasos
@@ -71,7 +72,7 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
       
       return await response.json();
     } catch (error) {
-      console.error(`API Error ${endpoint}:`, error);
+      console.error(`API Error ${endpoint} con opciones ${JSON.stringify(options.body)}:`, error);
       throw error;
     }
   };
@@ -162,7 +163,7 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
 
   // Navegación
   const siguientePaso = () => {
-    if (pasoActual < pasos.length - 1) {
+    if (pasoActual <= pasos.length) {
       setPasoActual(pasoActual + 1);
     }
   };
@@ -183,6 +184,11 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
   // Enviar formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (pasoActual !== pasos.length - 1) {
+      console.log('Submit bloqueado - no estamos en el último paso');
+      return;
+    }
     
     try {
       setSaving(true);
@@ -264,6 +270,57 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
         }
       }
     }
+  };
+  // Renderizado de pasos
+  const renderPaso = () => {
+    return (
+      <div className="step-navigation">
+        <div className="step-nav-left">
+          <button
+            type="button"
+            onClick={pasoAnterior}
+            disabled={pasoActual === 0 || saving}
+            className="step-button step-button-prev"
+          >
+            <ChevronLeft className="icon" />
+            Anterior
+          </button>
+        </div>
+        
+        <div className="step-info-container">
+          <span className="step-info">
+            Paso {pasoActual + 1} de {pasos.length}: {pasos[pasoActual].label}
+          </span>
+        </div>
+  
+        <div className="step-nav-right">
+          {pasoActual < pasos.length - 1 ? (
+            <button
+              type="button"  // ✅ Asegurar que es tipo button
+              onClick={(e) => {
+                e.preventDefault(); // ✅ Prevenir cualquier comportamiento de submit
+                e.stopPropagation(); // ✅ Prevenir propagación del evento
+                siguientePaso();
+              }}
+              disabled={!validarPasoActual() || saving}
+              className="step-button step-button-next"
+            >
+              Siguiente
+              <ChevronRight className="icon" />
+            </button>
+          ) : (
+            <button
+              type="submit"  // ✅ Solo este botón debe hacer submit
+              disabled={saving || !validarPasoActual()}
+              className="step-button step-button-submit"
+            >
+              {saving ? <Loader className="icon icon-spin" /> : <Save className="icon" />}
+              {saving ? 'Guardando...' : 'Guardar Brigada'}
+            </button>
+          )}
+        </div>
+      </div>
+    );
   };
 
   // Renderizado de campos
@@ -387,17 +444,21 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form id="brigada-form" onSubmit={(e) => {
+          e.preventDefault();
+          console.log('Formulario enviado');
+          handleSubmit(e)
+        }}>
           {/* Indicador de progreso */}
           <div className="progress-container">
             <div className="progress-header">
               <span className="progress-title">Progreso del formulario:</span>
-              <span className="progress-counter">{pasoActual + 1} de {pasos.length}</span>
+              <span className="progress-counter">{pasoActual} de {pasos.length}</span>
             </div>
             <div className="progress-bar">
               <div 
                 className="progress-fill" 
-                style={{ width: `${((pasoActual + 1) / pasos.length) * 100}%` }}
+                style={{ width: `${((pasoActual) / pasos.length) * 100}%` }}
               />
             </div>
             <div className="current-step-info">
@@ -426,48 +487,7 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
           </div>
 
           {/* Navegación por pasos */}
-          <div className="step-navigation">
-            <div className="step-nav-left">
-              <button
-                type="button"
-                onClick={pasoAnterior}
-                disabled={pasoActual === 0 || saving}
-                className="step-button step-button-prev"
-              >
-                <ChevronLeft className="icon" />
-                Anterior
-              </button>
-            </div>
-            
-            <div className="step-info-container">
-              <span className="step-info">
-                Paso {pasoActual + 1} de {pasos.length}: {pasos[pasoActual].label}
-              </span>
-            </div>
-
-            <div className="step-nav-right">
-              {pasoActual < pasos.length - 1 ? (
-                <button
-                  type="button"
-                  onClick={siguientePaso}
-                  disabled={!validarPasoActual() || saving}
-                  className="step-button step-button-next"
-                >
-                  Siguiente
-                  <ChevronRight className="icon" />
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={saving || !validarPasoActual()}
-                  className="step-button step-button-submit"
-                >
-                  {saving ? <Loader className="icon icon-spin" /> : <Save className="icon" />}
-                  {saving ? 'Guardando...' : 'Guardar Brigada'}
-                </button>
-              )}
-            </div>
-          </div>
+          {renderPaso()}
 
           {/* Contenido */}
           <div className="content-container">
@@ -558,45 +578,220 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
             {pasoActual === 6 && renderSeccionInventario('limpieza', 'Productos de Limpieza', Droplets, 'icon-cyan')}
             {pasoActual === 7 && renderSeccionInventario('medicamentos', 'Medicamentos y Primeros Auxilios', Heart, 'icon-red')}
             {pasoActual === 8 && renderSeccionInventario('rescate_animal', 'Rescate Animal', PawPrint, 'icon-amber')}
+            {/* Paso de revisión final - VERSIÓN MEJORADA */}
+            {pasoActual === 9 && (
+              <div className="resources-container">
+                <div className="section-header">
+                  <Check className="icon-lg icon-green" />
+                  <h2 className="section-title">Revisión Final</h2>
+                </div>
+                <div className="section-content">
+                  
+                  {/* Información General de la Brigada */}
+                  <div className="review-section">
+                    <div className="review-section-header">
+                      <Users className="icon-lg icon-blue" />
+                      <h3 className="review-section-title">Información de la Brigada</h3>
+                    </div>
+                    <div className="review-grid">
+                      <div className="review-item">
+                        <span className="review-label">Nombre de la Brigada:</span>
+                        <span className="review-value primary">{brigada.nombre || 'No especificado'}</span>
+                      </div>
+                      <div className="review-item">
+                        <span className="review-label">Cantidad de Bomberos Activos:</span>
+                        <span className="review-value">{brigada.cantidad_bomberos_activos || 'No especificado'}</span>
+                      </div>
+                      <div className="review-item">
+                        <span className="review-label">Celular del Comandante:</span>
+                        <span className="review-value">{brigada.contacto_celular_comandante || 'No especificado'}</span>
+                      </div>
+                      <div className="review-item">
+                        <span className="review-label">Encargado de Logística:</span>
+                        <span className="review-value">{brigada.encargado_logistica || 'No especificado'}</span>
+                      </div>
+                      <div className="review-item">
+                        <span className="review-label">Celular de Logística:</span>
+                        <span className="review-value">{brigada.contacto_celular_logistica || 'No especificado'}</span>
+                      </div>
+                      <div className="review-item">
+                        <span className="review-label">Número de Emergencia Público:</span>
+                        <span className="review-value emergency">{brigada.numero_emergencia_publico || 'No especificado'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Resumen de Inventario */}
+                  <div className="review-section">
+                    <div className="review-section-header">
+                      <Package className="icon-lg icon-orange" />
+                      <h3 className="review-section-title">Resumen de Inventario</h3>
+                    </div>
+                    <div className="inventory-summary">
+                      {(() => {
+                        const categoriasConRecursos = Object.entries(inventario).filter(([, recursos]) => {
+                          return Object.values(recursos).some(recurso => {
+                            if (recurso.cantidad && recurso.cantidad > 0) return true;
+                            return Object.values(recurso).some(valor => typeof valor === 'number' && valor > 0);
+                          });
+                        });
+
+                        const totalCategorias = categoriasConRecursos.length;
+                        const totalRecursos = categoriasConRecursos.reduce((total, [, recursos]) => {
+                          return total + Object.keys(recursos).filter(recurso => {
+                            const datos = recursos[recurso];
+                            if (datos.cantidad && datos.cantidad > 0) return true;
+                            return Object.values(datos).some(valor => typeof valor === 'number' && valor > 0);
+                          }).length;
+                        }, 0);
+                        const totalUnidades = categoriasConRecursos.reduce((total, [, recursos]) => {
+                          return total + Object.values(recursos).reduce((subtotal, recurso) => {
+                            if (recurso.cantidad) {
+                              return subtotal + (parseInt(recurso.cantidad) || 0);
+                            } else {
+                              return subtotal + Object.values(recurso).reduce((sum, val) => {
+                                return sum + (typeof val === 'number' ? val : 0);
+                              }, 0);
+                            }
+                          }, 0);
+                        }, 0);
+
+                        return (
+                          <div className="summary-stats">
+                            <div className="summary-stat">
+                              <span className="stat-number">{totalCategorias}</span>
+                              <span className="stat-label">Categorías con recursos</span>
+                            </div>
+                            <div className="summary-stat">
+                              <span className="stat-number">{totalRecursos}</span>
+                              <span className="stat-label">Tipos de recursos</span>
+                            </div>
+                            <div className="summary-stat">
+                              <span className="stat-number">{totalUnidades}</span>
+                              <span className="stat-label">Unidades totales</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Detalle por Categorías */}
+                  {Object.entries(inventario).map(([categoria, recursos]) => {
+                    // Filtrar solo recursos que tienen cantidades
+                    const recursosConCantidades = Object.entries(recursos).filter(([, datos]) => {
+                      if (datos.cantidad && datos.cantidad > 0) return true;
+                      return Object.values(datos).some(valor => typeof valor === 'number' && valor > 0);
+                    });
+
+                    if (recursosConCantidades.length === 0) return null;
+
+                    // Encontrar el paso correspondiente para obtener el icono y color
+                    const pasoCategoria = pasos.find(paso => paso.id === categoria);
+                    const IconComponent = pasoCategoria ? pasoCategoria.icono : Package;
+                    const colorClass = pasoCategoria ? pasoCategoria.color : 'icon-gray';
+
+                    return (
+                      <div key={categoria} className="review-section">
+                        <div className="review-section-header">
+                          <IconComponent className={`icon-lg ${colorClass}`} />
+                          <h3 className="review-section-title">
+                            {categoria === 'epp' && 'Equipo de Protección Personal (EPP)'}
+                            {categoria === 'herramientas' && 'Herramientas'}
+                            {categoria === 'logistica' && 'Logística y Vehículos'}
+                            {categoria === 'alimentacion' && 'Alimentación y Bebidas'}
+                            {categoria === 'campo' && 'Equipo de Campo'}
+                            {categoria === 'limpieza' && 'Productos de Limpieza'}
+                            {categoria === 'medicamentos' && 'Medicamentos y Primeros Auxilios'}
+                            {categoria === 'rescate_animal' && 'Rescate Animal'}
+                          </h3>
+                          <span className="category-count">
+                            {recursosConCantidades.length} recurso{recursosConCantidades.length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        
+                        <div className="resources-review-grid">
+                          {recursosConCantidades.map(([nombreRecurso, datos]) => {
+                            // Verificar si es un recurso con tallas o cantidad simple
+                            const tieneQuantity = datos.cantidad !== undefined;
+                            
+                            return (
+                              <div key={nombreRecurso} className="resource-review-card">
+                                <div className="resource-review-header">
+                                  <h4 className="resource-review-name">{nombreRecurso}</h4>
+                                </div>
+                                
+                                <div className="resource-review-details">
+                                  {tieneQuantity ? (
+                                    // Recurso con cantidad simple
+                                    <div className="quantity-display">
+                                      <span className="quantity-number">{datos.cantidad}</span>
+                                      <span className="quantity-label">unidades</span>
+                                    </div>
+                                  ) : (
+                                    // Recurso con tallas
+                                    <div className="sizes-display">
+                                      <div className="sizes-grid">
+                                        {Object.entries(datos)
+                                          .filter(([, cantidad]) => cantidad > 0)
+                                          .map(([talla, cantidad]) => (
+                                          <div key={talla} className="size-item">
+                                            <span className="size-label">{talla}</span>
+                                            <span className="size-quantity">{cantidad}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      <div className="total-display">
+                                        <span className="total-label">Total:</span>
+                                        <span className="total-number">
+                                          {Object.values(datos).reduce((sum, val) => sum + (typeof val === 'number' ? val : 0), 0)} unidades
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Mensaje si no hay recursos configurados */}
+                  {Object.keys(inventario).length === 0 && (
+                    <div className="review-section">
+                      <div className="empty-inventory-message">
+                        <AlertCircle className="icon-lg icon-amber" />
+                        <h3>No se han configurado recursos</h3>
+                        <p>Regrese a los pasos anteriores para configurar el inventario de recursos.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Notas importantes */}
+                  <div className="review-section">
+                    <div className="review-notes">
+                      <div className="notes-header">
+                        <AlertCircle className="icon icon-blue" />
+                        <h4>Notas Importantes</h4>
+                      </div>
+                      <ul className="notes-list">
+                        <li>• Verifique que toda la información esté correcta antes de guardar</li>
+                        <li>• Los recursos con cantidad 0 no se guardarán en el inventario</li>
+                        <li>• Puede regresar a cualquier paso anterior para hacer modificaciones</li>
+                        <li>• Una vez guardada, podrá editar esta información posteriormente</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Navegación por pasos */}
-          <div className="step-navigation">
-            <div className="step-nav-left">
-              <button
-                type="button"
-                onClick={pasoAnterior}
-                disabled={pasoActual === 0 || saving}
-                className="step-button step-button-prev"
-              >
-                <ChevronLeft className="icon" />
-                Anterior
-              </button>
-            </div>
-            
-            <div className="step-nav-right">
-              {pasoActual < pasos.length - 1 ? (
-                <button
-                  type="button"
-                  onClick={siguientePaso}
-                  disabled={!validarPasoActual() || saving}
-                  className="step-button step-button-next"
-                >
-                  Siguiente
-                  <ChevronRight className="icon" />
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={saving || !validarPasoActual()}
-                  className="step-button step-button-submit"
-                >
-                  {saving ? <Loader className="icon icon-spin" /> : <Save className="icon" />}
-                  {saving ? 'Guardando...' : 'Guardar Brigada'}
-                </button>
-              )}
-            </div>
-          </div>
+          {/*Navegación por pasos*/}
+          {renderPaso()}
         </form>
 
         {/* Información adicional */}
@@ -616,447 +811,6 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
           </div>
         </div>
       </div>
-
-      <style>{`
-        .formulario-container {
-          
-        }
-
-        .container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0 1rem;
-        }
-
-        .header {
-          background: white;
-          border-radius: 12px;
-          padding: 2rem;
-          margin-bottom: 2rem;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .header-content {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        .header-title {
-          font-size: 2rem;
-          font-weight: 700;
-          color: #1f2937;
-          margin: 0;
-        }
-
-        .header-subtitle {
-          color: #6b7280;
-          margin: 0.5rem 0 0 0;
-        }
-
-        .alert {
-          padding: 1rem;
-          border-radius: 8px;
-          margin-bottom: 1rem;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .alert-error {
-          background: #fee2e2;
-          color: #dc2626;
-          border: 1px solid #fecaca;
-        }
-
-        .alert-success {
-          background: #d1fae5;
-          color: #065f46;
-          border: 1px solid #a7f3d0;
-        }
-
-        .loading-container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          min-height: 400px;
-          background: white;
-          border-radius: 12px;
-          margin: 2rem 0;
-        }
-
-        .progress-container {
-          background: white;
-          border-radius: 12px;
-          padding: 1.5rem;
-          margin-bottom: 1rem;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .progress-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1rem;
-        }
-
-        .progress-title {
-          font-weight: 600;
-          color: #374151;
-        }
-
-        .progress-counter {
-          color: #6b7280;
-          font-size: 0.875rem;
-        }
-
-        .progress-bar {
-          height: 8px;
-          background: #e5e7eb;
-          border-radius: 4px;
-          overflow: hidden;
-          margin-bottom: 1rem;
-        }
-
-        .progress-fill {
-          height: 100%;
-          background: linear-gradient(90deg, #10b981, #059669);
-          transition: width 0.3s ease;
-        }
-
-        .current-step-info {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          color: #374151;
-          font-weight: 500;
-        }
-
-        .nav-container {
-          background: white;
-          border-radius: 12px;
-          padding: 1rem;
-          margin-bottom: 1rem;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .nav-tabs {
-          display: flex;
-          gap: 0.5rem;
-          overflow-x: auto;
-          padding-bottom: 0.5rem;
-        }
-
-        .nav-tab {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.75rem 1rem;
-          border-radius: 8px;
-          font-size: 0.875rem;
-          font-weight: 500;
-          color: #6b7280;
-          background: #f9fafb;
-          border: 1px solid #e5e7eb;
-          min-width: fit-content;
-          transition: all 0.2s ease;
-        }
-
-        .nav-tab.active {
-          background: #3b82f6;
-          color: white;
-          border-color: #3b82f6;
-        }
-
-        .nav-tab.completed {
-          background: #10b981;
-          color: white;
-          border-color: #10b981;
-        }
-
-        .content-container {
-          background: white;
-          border-radius: 12px;
-          padding: 2rem;
-          margin-bottom: 1rem;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .resources-container {
-          margin-bottom: 2rem;
-        }
-
-        .section-header {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          margin-bottom: 1.5rem;
-        }
-
-        .section-title {
-          font-size: 1.5rem;
-          font-weight: 600;
-          color: #1f2937;
-          margin: 0;
-        }
-
-        .form-grid {
-          display: grid;
-          gap: 1.5rem;
-        }
-
-        .two-cols {
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        }
-
-        .three-cols {
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        }
-
-        .one-col {
-          grid-template-columns: 1fr;
-        }
-
-        .form-group {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-
-        .form-label {
-          font-weight: 500;
-          color: #374151;
-        }
-
-        .form-input {
-          padding: 0.75rem;
-          border: 1px solid #d1d5db;
-          border-radius: 8px;
-          font-size: 1rem;
-          transition: border-color 0.2s ease;
-        }
-
-        .form-input:focus {
-          outline: none;
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .resources-grid {
-          display: grid;
-          gap: 1.5rem;
-        }
-
-        .resource-card {
-          background: #f9fafb;
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          padding: 1rem;
-        }
-
-        .resource-title {
-          font-weight: 500;
-          color: #374151;
-          margin: 0 0 1rem 0;
-          font-size: 0.875rem;
-        }
-
-        .tallas-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-          gap: 0.5rem;
-        }
-
-        .talla-group {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.25rem;
-        }
-
-        .talla-label {
-          font-size: 0.75rem;
-          font-weight: 500;
-          color: #6b7280;
-        }
-
-        .talla-input, .cantidad-input {
-          width: 100%;
-          padding: 0.5rem;
-          border: 1px solid #d1d5db;
-          border-radius: 6px;
-          text-align: center;
-          font-size: 0.875rem;
-        }
-
-        .cantidad-container {
-          display: flex;
-          justify-content: center;
-        }
-
-        .cantidad-input {
-          max-width: 100px;
-        }
-
-        .empty-state {
-          background: #f9fafb;
-          border: 1px dashed #d1d5db;
-          border-radius: 8px;
-          padding: 2rem;
-          text-align: center;
-          color: #6b7280;
-        }
-
-        .step-navigation {
-          display: flex;
-          justify-content: space-between;
-          background: white;
-          border-radius: 12px;
-          padding: 1.5rem;
-          margin-bottom: 2rem;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .step-nav-left, .step-nav-right {
-          display: flex;
-          gap: 1rem;
-        }
-
-        .step-button {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.75rem 1.5rem;
-          border-radius: 8px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          border: none;
-        }
-
-        .step-button-prev {
-          background: #f3f4f6;
-          color: #374151;
-        }
-
-        .step-button-prev:hover:not(:disabled) {
-          background: #e5e7eb;
-        }
-
-        .step-button-next {
-          background: #3b82f6;
-          color: white;
-        }
-
-        .step-button-next:hover:not(:disabled) {
-          background: #2563eb;
-        }
-
-        .step-button-submit {
-          background: #10b981;
-          color: white;
-        }
-
-        .step-button-submit:hover:not(:disabled) {
-          background: #059669;
-        }
-
-        .step-button:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .info-container {
-          background: white;
-          border-radius: 12px;
-          padding: 1.5rem;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .info-content {
-          display: flex;
-          gap: 1rem;
-        }
-
-        .info-text {
-          flex: 1;
-        }
-
-        .info-title {
-          font-weight: 600;
-          color: #1f2937;
-          margin: 0 0 0.5rem 0;
-        }
-
-        .info-list {
-          margin: 0;
-          padding-left: 1.25rem;
-          color: #4b5563;
-        }
-
-        .info-list li {
-          margin-bottom: 0.25rem;
-        }
-
-        /* Iconos */
-        .icon {
-          width: 1rem;
-          height: 1rem;
-        }
-
-        .icon-lg {
-          width: 1.5rem;
-          height: 1.5rem;
-        }
-
-        .icon-xl {
-          width: 2rem;
-          height: 2rem;
-        }
-
-        .icon-spin {
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-
-        /* Colores de iconos */
-        .icon-blue {
-          color: #3b82f6;
-        }
-
-        .icon-orange {
-          color: #f97316;
-        }
-
-        .icon-gray {
-          color: #6b7280;
-        }
-
-        .icon-green {
-          color: #10b981;
-        }
-
-        .icon-purple {
-          color: #8b5cf6;
-        }
-
-        .icon-cyan {
-          color: #06b6d4;
-        }
-
-        .icon-red {
-          color: #ef4444;
-        }
-
-        .icon-amber {
-          color: #f59e0b;
-        }
-      `}</style>
     </div>
   );
 };
