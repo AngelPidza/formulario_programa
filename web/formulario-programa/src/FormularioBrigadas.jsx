@@ -1,5 +1,5 @@
 import React, { useMemo ,useState, useEffect } from 'react';
-import { Save, AlertCircle, Users, Package, Wrench, Fuel, Utensils, Tent, Droplets, Heart, PawPrint, ChevronLeft, ChevronRight, Loader, Check, X } from 'lucide-react';
+import { Save, AlertCircle, Users, Package, Wrench, Fuel, Utensils, Tent, Droplets, Heart, PawPrint, ChevronLeft, ChevronRight, Loader, Check, X, CheckCircle } from 'lucide-react';
 import './FormularioBrigadas.css'; // Asegúrate de tener un archivo CSS para estilos
 const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
   // Estados principales
@@ -163,11 +163,12 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
 
   // Navegación
   const siguientePaso = () => {
-    if (pasoActual <= pasos.length) {
-      setPasoActual(pasoActual + 1);
-    }
+    setPasoActual(prev => {
+      const nuevoPaso = prev + 1;
+      console.log('Paso actual:', nuevoPaso);
+      return nuevoPaso;
+    });
   };
-
   const pasoAnterior = () => {
     if (pasoActual > 0) {
       setPasoActual(pasoActual - 1);
@@ -216,6 +217,10 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
 
       setSuccess('Brigada guardada exitosamente');
       onSuccess(brigadaGuardada);
+
+      // 3. Completar la barra de progreso
+      setPasoActual(pasos.length); // Ir al último paso
+      console.log(`Formulario enviado exitosamente: ${pasos.length} y paso actual ${pasoActual}`);
 
     } catch (err) {
       setError(`Error al guardar: ${err.message}`);
@@ -273,7 +278,11 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
   };
   // Renderizado de pasos
   const renderPaso = () => {
+    if (pasoActual === pasos.length) {
+      return null; // No renderizar nada
+    }
     return (
+      // Renderizado de la navegación por pasos con la condicion de que no sea el paso final
       <div className="step-navigation">
         <div className="step-nav-left">
           <button
@@ -289,7 +298,7 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
         
         <div className="step-info-container">
           <span className="step-info">
-            Paso {pasoActual + 1} de {pasos.length}: {pasos[pasoActual].label}
+            Paso {pasoActual} de {pasos.length}: { pasoActual < pasos.length ? pasos[pasoActual].label : '' }
           </span>
         </div>
   
@@ -461,10 +470,13 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
                 style={{ width: `${((pasoActual) / pasos.length) * 100}%` }}
               />
             </div>
-            <div className="current-step-info">
-              {React.createElement(pasos[pasoActual].icono, { className: "icon" })}
-              <span className="current-step-name">{pasos[pasoActual].label}</span>
-            </div>
+            {pasoActual <= pasos.length - 1 && (
+              <div className="current-step-info">
+                {React.createElement(pasos[pasoActual].icono, { className: "icon" })}
+                <span className="current-step-name">{pasos[pasoActual].label}</span>
+              </div>
+              )
+            }
           </div>
 
           {/* Navegación por pestañas */}
@@ -785,6 +797,16 @@ const FormularioBrigadas = ({ brigadaId = null, onSuccess = () => {} }) => {
                     </div>
                   </div>
 
+                </div>
+              </div>
+            )}
+            {/* Fin del paso de revisión final */}
+            {pasoActual === pasos.length && (
+              <div className="final-step">
+                <div className="final-step-content">
+                  <CheckCircle className="icon-lg icon-green" />
+                  <h3 >¡Brigada guardada con exito!</h3>
+                  <p>¡Gracias por completar el formulario de brigada!</p>
                 </div>
               </div>
             )}

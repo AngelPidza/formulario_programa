@@ -788,11 +788,6 @@
   font-weight: 500;
 }
 
-/* Tallas */
-.sizes-display {
-  space-y: 12px;
-}
-
 .sizes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
@@ -911,6 +906,12 @@
   margin-bottom: 0;
 }
 
+.final-step-content {
+  padding: 24px;
+  color: #3867c4;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
 /* Responsivo */
 @media (max-width: 768px) {
   .review-grid {
