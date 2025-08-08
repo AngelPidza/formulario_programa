@@ -912,6 +912,85 @@
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+
+.observaciones-review {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  border-left: 3px solid #3b82f6;
+}
+
+.observaciones-review-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.observaciones-review-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.observaciones-review-text {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.resource-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.observaciones-container {
+  margin-top: 8px;
+}
+
+.observaciones-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.observaciones-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.observaciones-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 60px;
+  transition: border-color 0.2s ease;
+}
+
+.observaciones-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.observaciones-input::placeholder {
+  color: #9ca3af;
+}
+
+.icon-sm {
+  width: 16px;
+  height: 16px;
+  color: #6b7280;
+}
+
 /* Responsivo */
 @media (max-width: 768px) {
   .review-grid {
